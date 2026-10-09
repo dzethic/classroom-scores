@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="课堂加分">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' rx='36' fill='%231a73e8'/><text x='90' y='120' text-anchor='middle' font-size='100' fill='white'>📋</text></svg>">
+<title>课堂互动加分系统</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--primary:#1a73e8;--primary-light:#e8f0fe;--primary-dark:#1557b0;--success:#34a853;--danger:#ea4335;--warning:#fbbc04;--bg:#f5f7fa;--card:#fff;--text:#202124;--text-secondary:#5f6368;--border:#dadce0;--radius:12px;--shadow:0 2px 8px rgba(0,0,0,.08)}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:env(safe-area-inset-bottom)}
+.header{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;padding:16px 20px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(26,115,232,.3)}
+.header h1{font-size:22px;font-weight:700;margin-bottom:4px}
+.header .info{font-size:13px;opacity:.85}
+.tabs{display:flex;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:99}
+.tab{flex:1;padding:14px;text-align:center;font-size:15px;font-weight:600;color:var(--text-secondary);cursor:pointer;border-bottom:3px solid transparent;transition:all .2s}
+.tab.active{color:var(--primary);border-bottom-color:var(--primary);background:var(--primary-light)}
+.container{max-width:600px;margin:0 auto;padding:16px}
+.search-box{position:relative;margin-bottom:16px}
+.search-box input{width:100%;padding:16px 20px;font-size:20px;border:2px solid var(--border);border-radius:var(--radius);outline:none;transition:border-color .2s;background:var(--card)}
+.search-box input:focus{border-color:var(--primary)}
+.search-box input::placeholder{color:#aaa}
+.search-result{margin-top:12px}
+.student-card{background:var(--card);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);border:2px solid transparent;transition:all .2s}
+.student-card.selected{border-color:var(--primary);background:var(--primary-light)}
+.student-card .name{font-size:24px;font-weight:700;color:var(--text)}
+.student-card .meta{font-size:14px;color:var(--text-secondary);margin-top:4px}
+.student-card .score-display{margin-top:10px;font-size:18px;font-weight:600;color:var(--primary)}
+.score-buttons{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:16px}
+.score-btn{padding:16px 8px;font-size:20px;font-weight:700;border:none;border-radius:var(--radius);cursor:pointer;transition:all .15s;touch-action:manipulation}
+.score-btn:active{transform:scale(.95)}
+.score-btn.plus{background:#e6f4ea;color:var(--success)}
+.score-btn.plus:active{background:#ceead6}
+.score-btn.minus{background:#fce8e6;color:var(--danger)}
+.score-btn.minus:active{background:#f8d7da}
+.score-btn.reset{background:#fef7e0;color:#e37400;font-size:14px}
+.score-btn.reset:active{background:#fdefc3}
+.hint-text{text-align:center;padding:40px 20px;color:var(--text-secondary);font-size:16px}
+.no-match{color:var(--danger);text-align:center;padding:20px;font-size:16px}
+.records-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+.records-header h2{font-size:18px;color:var(--text)}
+.filter-bar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.filter-btn{padding:8px 14px;border:1px solid var(--border);border-radius:20px;background:var(--card);font-size:13px;cursor:pointer;transition:all .2s}
+.filter-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.record-item{background:var(--card);border-radius:var(--radius);padding:14px;margin-bottom:10px;box-shadow:var(--shadow)}
+.record-item .top{display:flex;justify-content:space-between;align-items:center}
+.record-item .student-info .rname{font-size:17px;font-weight:600}
+.record-item .student-info .rmeta{font-size:13px;color:var(--text-secondary);margin-top:2px}
+.record-item .total-score{font-size:24px;font-weight:700;color:var(--primary)}
+.record-item .details{margin-top:10px;border-top:1px solid var(--border);padding-top:10px}
+.record-item .detail-row{display:flex;justify-content:space-between;font-size:13px;color:var(--text-secondary);padding:3px 0}
+.record-item .detail-row .delta.positive{color:var(--success);font-weight:600}
+.record-item .detail-row .delta.negative{color:var(--danger);font-weight:600}
+.toggle-details{font-size:13px;color:var(--primary);cursor:pointer;margin-top:8px;display:inline-block}
+.action-bar{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+.action-btn{flex:1;min-width:120px;padding:12px 16px;border:none;border-radius:var(--radius);font-size:14px;font-weight:600;cursor:pointer;transition:all .2s}
+.action-btn.export{background:var(--primary);color:#fff}
+.action-btn.export:active{background:var(--primary-dark)}
+.action-btn.clear{background:#fce8e6;color:var(--danger)}
+.action-btn.clear:active{background:#f8d7da}
+.confirm-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:200;padding:20px}
+.confirm-box{background:var(--card);border-radius:var(--radius);padding:24px;max-width:360px;width:100%;text-align:center}
+.confirm-box p{font-size:16px;margin-bottom:20px;line-height:1.5}
+.confirm-box .btns{display:flex;gap:10px}
+.confirm-box .btns button{flex:1;padding:12px;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer}
+.confirm-box .btns .cancel{background:var(--border);color:var(--text)}
+.confirm-box .btns .confirm{background:var(--danger);color:#fff}
+.empty-records{text-align:center;padding:60px 20px;color:var(--text-secondary)}
+.empty-records .icon{font-size:48px;margin-bottom:12px}
+.badge{display:inline-block;background:var(--primary);color:#fff;border-radius:10px;padding:2px 8px;font-size:12px;font-weight:600;margin-left:6px}
+.import-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:200;padding:20px}
+.import-box{background:var(--card);border-radius:var(--radius);padding:24px;max-width:480px;width:100%}
+.import-box h3{font-size:18px;margin-bottom:8px}
+.import-box .desc{font-size:13px;color:var(--text-secondary);margin-bottom:14px;line-height:1.5}
+.import-box textarea{width:100%;height:140px;border:2px solid var(--border);border-radius:8px;padding:12px;font-size:15px;font-family:monospace;resize:vertical;outline:none;transition:border-color .2s}
+.import-box textarea:focus{border-color:var(--primary)}
+.import-box .preview{margin-top:12px;font-size:13px;color:var(--text-secondary);line-height:1.6}
+.import-box .preview .matched{color:var(--success);font-weight:600}
+.import-box .preview .unmatched{color:var(--danger);font-weight:600}
+.import-box .btns{display:flex;gap:10px;margin-top:16px}
+.import-box .btns button{flex:1;padding:12px;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer}
+.import-box .btns .cancel{background:var(--border);color:var(--text)}
+.import-box .btns .do-import{background:var(--primary);color:#fff}
+.import-box .btns .do-import:active{background:var(--primary-dark)}
+.action-btn.import{background:#e8f5e9;color:#2e7d32}
+.action-btn.import:active{background:#c8e6c9}
+@media(max-width:400px){
+.score-buttons{grid-template-columns:repeat(2,1fr)}
+.header h1{font-size:19px}
+.search-box input{font-size:18px;padding:14px 16px}
+}
+</style>
+</head>
+<body>
+<div class="header">
+<h1>📋 课堂互动加分系统</h1>
+<div class="info">马克思主义基本原理 · 负责人：朱墨青</div>
+</div>
+<div class="tabs">
+<div class="tab active" onclick="showTab('scoring')">加分操作</div>
+<div class="tab" onclick="showTab('records')">记录查看<span class="badge" id="recordBadge" style="display:none">0</span></div>
+</div>
+<div class="container">
+<div id="scoringPanel">
+<div class="search-box">
+<input type="text" id="searchInput" placeholder="输入学号后四位（如3101）" inputmode="numeric" maxlength="10" autocomplete="off" oninput="handleSearch()">
+</div>
+<div id="searchResult" class="search-result">
+<div class="hint-text">请输入学号后四位快速定位学生</div>
+</div>
+<div id="scoreAction" style="display:none">
+<div class="score-buttons">
+<button class="score-btn plus" onclick="addScore(1)">+1</button>
+<button class="score-btn plus" onclick="addScore(2)">+2</button>
+<button class="score-btn plus" onclick="addScore(3)">+3</button>
+<button class="score-btn minus" onclick="addScore(-1)">-1</button>
+</div>
+<div style="margin-top:10px">
+<button class="score-btn reset" style="width:100%" onclick="resetStudent()">清零该学生分数</button>
+</div>
+</div>
+</div>
+<div id="recordsPanel" style="display:none">
+<div class="records-header">
+<h2>加分记录</h2>
+</div>
+<div class="filter-bar" id="filterBar"></div>
+<div id="recordsList"></div>
+<div class="action-bar">
+<button class="action-btn export" onclick="exportSummary()">导出汇总CSV</button>
+<button class="action-btn export" onclick="exportDetail()">导出明细CSV</button>
+<button class="action-btn import" onclick="showImportDialog()">📥 导入历史数据</button>
+<button class="action-btn clear" onclick="clearAll()">清空所有记录</button>
+</div>
+</div>
+</div>
+<div id="importOverlay" class="import-overlay" style="display:none">
+<div class="import-box">
+<h3>📥 导入历史加分数据</h3>
+<div class="desc">将学号后四位粘贴到下方，支持空格、换行、逗号分隔。<br>每个号码将自动匹配学生并 +1 分。</div>
+<textarea id="importTextarea" placeholder="例如：3446 3446 3413 3340 3431 3440..." oninput="previewImport()"></textarea>
+<div class="preview" id="importPreview"></div>
+<div class="btns">
+<button class="cancel" onclick="hideImportDialog()">取消</button>
+<button class="do-import" id="doImportBtn" onclick="doImport()" disabled>确认导入</button>
+</div>
+</div>
+</div>
+<div id="confirmOverlay" class="confirm-overlay" style="display:none">
+<div class="confirm-box">
+<p id="confirmText">确定要清空所有记录吗？此操作不可恢复。</p>
+<div class="btns">
+<button class="cancel" onclick="hideConfirm()">取消</button>
+<button class="confirm" id="confirmBtn" onclick="">确定</button>
+</div>
+</div>
+</div>
+<script>
+const STUDENTS=[{"id":"B26123101","s":"3101","n":"张幸运","c":"财管专升本B261231","cn":"31"},{"id":"B26123102","s":"3102","n":"徐思甜","c":"财管专升本B261231","cn":"31"},{"id":"B26123103","s":"3103","n":"段卓亚","c":"财管专升本B261231","cn":"31"},{"id":"B26123104","s":"3104","n":"孙灿灿","c":"财管专升本B261231","cn":"31"},{"id":"B26123105","s":"3105","n":"牛玉凤","c":"财管专升本B261231","cn":"31"},{"id":"B26123106","s":"3106","n":"翟香晴","c":"财管专升本B261231","cn":"31"},{"id":"B26123107","s":"3107","n":"尹俊楠","c":"财管专升本B261231","cn":"31"},{"id":"B26123108","s":"3108","n":"南婷婷","c":"财管专升本B261231","cn":"31"},{"id":"B26123109","s":"3109","n":"楚雪妍","c":"财管专升本B261231","cn":"31"},{"id":"B26123110","s":"3110","n":"吕媛","c":"财管专升本B261231","cn":"31"},{"id":"B26123111","s":"3111","n":"王菲菲","c":"财管专升本B261231","cn":"31"},{"id":"B26123112","s":"3112","n":"杨天新","c":"财管专升本B261231","cn":"31"},{"id":"B26123113","s":"3113","n":"程鑫","c":"财管专升本B261231","cn":"31"},{"id":"B26123114","s":"3114","n":"袁双","c":"财管专升本B261231","cn":"31"},{"id":"B26123115","s":"3115","n":"袁莹莹","c":"财管专升本B261231","cn":"31"},{"id":"B26123116","s":"3116","n":"苗仪","c":"财管专升本B261231","cn":"31"},{"id":"B26123117","s":"3117","n":"朱妍","c":"财管专升本B261231","cn":"31"},{"id":"B26123118","s":"3118","n":"丁婷婷","c":"财管专升本B261231","cn":"31"},{"id":"B26123119","s":"3119","n":"杜梦思","c":"财管专升本B261231","cn":"31"},{"id":"B26123120","s":"3120","n":"刘阳爽","c":"财管专升本B261231","cn":"31"},{"id":"B26123121","s":"3121","n":"高永悦","c":"财管专升本B261231","cn":"31"},{"id":"B26123122","s":"3122","n":"王可莉","c":"财管专升本B261231","cn":"31"},{"id":"B26123123","s":"3123","n":"何婉茹","c":"财管专升本B261231","cn":"31"},{"id":"B26123124","s":"3124","n":"李思雨","c":"财管专升本B261231","cn":"31"},{"id":"B26123125","s":"3125","n":"左美艳","c":"财管专升本B261231","cn":"31"},{"id":"B26123126","s":"3126","n":"刘美锋","c":"财管专升本B261231","cn":"31"},{"id":"B26123127","s":"3127","n":"徐满玉","c":"财管专升本B261231","cn":"31"},{"id":"B26123128","s":"3128","n":"冯进霞","c":"财管专升本B261231","cn":"31"},{"id":"B26123129","s":"3129","n":"徐梦冉","c":"财管专升本B261231","cn":"31"},{"id":"B26123130","s":"3130","n":"黄怡沁","c":"财管专升本B261231","cn":"31"},{"id":"B26123131","s":"3131","n":"尹林旭","c":"财管专升本B261231","cn":"31"},{"id":"B26123132","s":"3132","n":"孙一杰","c":"财管专升本B261231","cn":"31"},{"id":"B26123133","s":"3133","n":"李雪莲","c":"财管专升本B261231","cn":"31"},{"id":"B26123134","s":"3134","n":"李雯静","c":"财管专升本B261231","cn":"31"},{"id":"B26123135","s":"3135","n":"张文文","c":"财管专升本B261231","cn":"31"},{"id":"B26123136","s":"3136","n":"宋宁","c":"财管专升本B261231","cn":"31"},{"id":"B26123137","s":"3137","n":"杨钰闲","c":"财管专升本B261231","cn":"31"},{"id":"B26123138","s":"3138","n":"宋祎冉","c":"财管专升本B261231","cn":"31"},{"id":"B26123139","s":"3139","n":"王琼翔","c":"财管专升本B261231","cn":"31"},{"id":"B26123140","s":"3140","n":"段伟龙","c":"财管专升本B261231","cn":"31"},{"id":"B26123141","s":"3141","n":"王钰苒","c":"财管专升本B261231","cn":"31"},{"id":"B26123142","s":"3142","n":"杨怡航","c":"财管专升本B261231","cn":"31"},{"id":"B26123143","s":"3143","n":"徐高培","c":"财管专升本B261231","cn":"31"},{"id":"B26123144","s":"3144","n":"郭高领","c":"财管专升本B261231","cn":"31"},{"id":"B26123201","s":"3201","n":"刘含","c":"会计专升本B261232","cn":"32"},{"id":"B26123202","s":"3202","n":"赵彦雨","c":"会计专升本B261232","cn":"32"},{"id":"B26123203","s":"3203","n":"王冉","c":"会计专升本B261232","cn":"32"},{"id":"B26123204","s":"3204","n":"陈博瑶","c":"会计专升本B261232","cn":"32"},{"id":"B26123205","s":"3205","n":"杨启冰","c":"会计专升本B261232","cn":"32"},{"id":"B26123206","s":"3206","n":"单佳宇","c":"会计专升本B261232","cn":"32"},{"id":"B26123207","s":"3207","n":"艾欣然","c":"会计专升本B261232","cn":"32"},{"id":"B26123208","s":"3208","n":"王佳琪","c":"会计专升本B261232","cn":"32"},{"id":"B26123209","s":"3209","n":"谢佳鑫","c":"会计专升本B261232","cn":"32"},{"id":"B26123210","s":"3210","n":"闫怡佳","c":"会计专升本B261232","cn":"32"},{"id":"B26123211","s":"3211","n":"任志敏","c":"会计专升本B261232","cn":"32"},{"id":"B26123212","s":"3212","n":"赵润静","c":"会计专升本B261232","cn":"32"},{"id":"B26123213","s":"3213","n":"王佳欣","c":"会计专升本B261232","cn":"32"},{"id":"B26123214","s":"3214","n":"赵梦琪","c":"会计专升本B261232","cn":"32"},{"id":"B26123215","s":"3215","n":"徐菲","c":"会计专升本B261232","cn":"32"},{"id":"B26123216","s":"3216","n":"高甜","c":"会计专升本B261232","cn":"32"},{"id":"B26123217","s":"3217","n":"韦嘉鸣","c":"会计专升本B261232","cn":"32"},{"id":"B26123218","s":"3218","n":"刘小钰","c":"会计专升本B261232","cn":"32"},{"id":"B26123219","s":"3219","n":"陈艳平","c":"会计专升本B261232","cn":"32"},{"id":"B26123220","s":"3220","n":"胡佳音","c":"会计专升本B261232","cn":"32"},{"id":"B26123221","s":"3221","n":"肖培英","c":"会计专升本B261232","cn":"32"},{"id":"B26123222","s":"3222","n":"杨馨雨","c":"会计专升本B261232","cn":"32"},{"id":"B26123223","s":"3223","n":"郭含香","c":"会计专升本B261232","cn":"32"},{"id":"B26123224","s":"3224","n":"张议丹","c":"会计专升本B261232","cn":"32"},{"id":"B26123225","s":"3225","n":"刘恩临","c":"会计专升本B261232","cn":"32"},{"id":"B26123226","s":"3226","n":"段霁恒","c":"会计专升本B261232","cn":"32"},{"id":"B26123227","s":"3227","n":"晏依晴","c":"会计专升本B261232","cn":"32"},{"id":"B26123228","s":"3228","n":"付佳佳","c":"会计专升本B261232","cn":"32"},{"id":"B26123229","s":"3229","n":"孟思言","c":"会计专升本B261232","cn":"32"},{"id":"B26123230","s":"3230","n":"成文惠","c":"会计专升本B261232","cn":"32"},{"id":"B26123231","s":"3231","n":"翟博阳","c":"会计专升本B261232","cn":"32"},{"id":"B26123232","s":"3232","n":"鞠念念","c":"会计专升本B261232","cn":"32"},{"id":"B26123233","s":"3233","n":"项晓雯","c":"会计专升本B261232","cn":"32"},{"id":"B26123234","s":"3234","n":"杨艳鸽","c":"会计专升本B261232","cn":"32"},{"id":"B26123235","s":"3235","n":"黄芃铬","c":"会计专升本B261232","cn":"32"},{"id":"B26123236","s":"3236","n":"张怡珂","c":"会计专升本B261232","cn":"32"},{"id":"B26123237","s":"3237","n":"靳瑞雯","c":"会计专升本B261232","cn":"32"},{"id":"B26123238","s":"3238","n":"梁培媛","c":"会计专升本B261232","cn":"32"},{"id":"B26123239","s":"3239","n":"楚梦伟","c":"会计专升本B261232","cn":"32"},{"id":"B26123240","s":"3240","n":"黄蕴奇","c":"会计专升本B261232","cn":"32"},{"id":"B26123241","s":"3241","n":"孙冰心","c":"会计专升本B261232","cn":"32"},{"id":"B26123242","s":"3242","n":"张艺珂","c":"会计专升本B261232","cn":"32"},{"id":"B26123243","s":"3243","n":"杨柳","c":"会计专升本B261232","cn":"32"},{"id":"B26123244","s":"3244","n":"袁梦真","c":"会计专升本B261232","cn":"32"},{"id":"B26123245","s":"3245","n":"郝悦","c":"会计专升本B261232","cn":"32"},{"id":"B26123246","s":"3246","n":"万镇恺","c":"会计专升本B261232","cn":"32"},{"id":"B26123247","s":"3247","n":"薛灿宇","c":"会计专升本B261232","cn":"32"},{"id":"B26123248","s":"3248","n":"杨程杰","c":"会计专升本B261232","cn":"32"},{"id":"B26123249","s":"3249","n":"田翔宇","c":"会计专升本B261232","cn":"32"},{"id":"B26123501","s":"3501","n":"涂湘晗","c":"审计专升本B261235","cn":"35"},{"id":"B26123502","s":"3502","n":"张冰玉","c":"审计专升本B261235","cn":"35"},{"id":"B26123503","s":"3503","n":"李炳如","c":"审计专升本B261235","cn":"35"},{"id":"B26123504","s":"3504","n":"王静蕾","c":"审计专升本B261235","cn":"35"},{"id":"B26123505","s":"3505","n":"方晗琪","c":"审计专升本B261235","cn":"35"},{"id":"B26123506","s":"3506","n":"秦梦阳","c":"审计专升本B261235","cn":"35"},{"id":"B26123507","s":"3507","n":"孟庆娴","c":"审计专升本B261235","cn":"35"},{"id":"B26123508","s":"3508","n":"牛淼","c":"审计专升本B261235","cn":"35"},{"id":"B26123509","s":"3509","n":"钟娅宁","c":"审计专升本B261235","cn":"35"},{"id":"B26123510","s":"3510","n":"刘纹羽","c":"审计专升本B261235","cn":"35"},{"id":"B26123511","s":"3511","n":"付梦雨","c":"审计专升本B261235","cn":"35"},{"id":"B26123512","s":"3512","n":"焦聪敏","c":"审计专升本B261235","cn":"35"},{"id":"B26123513","s":"3513","n":"孙冰","c":"审计专升本B261235","cn":"35"},{"id":"B26123514","s":"3514","n":"焦文欣","c":"审计专升本B261235","cn":"35"},{"id":"B26123515","s":"3515","n":"王婉颖","c":"审计专升本B261235","cn":"35"},{"id":"B26123516","s":"3516","n":"张雨萌","c":"审计专升本B261235","cn":"35"},{"id":"B26123517","s":"3517","n":"李改兰","c":"审计专升本B261235","cn":"35"},{"id":"B26123518","s":"3518","n":"李甜雨","c":"审计专升本B261235","cn":"35"},{"id":"B26123519","s":"3519","n":"史金雨","c":"审计专升本B261235","cn":"35"},{"id":"B26123520","s":"3520","n":"刘梦晴","c":"审计专升本B261235","cn":"35"},{"id":"B26123521","s":"3521","n":"耿忠慧","c":"审计专升本B261235","cn":"35"},{"id":"B26123522","s":"3522","n":"宋鑫宇","c":"审计专升本B261235","cn":"35"},{"id":"B26123523","s":"3523","n":"张果","c":"审计专升本B261235","cn":"35"},{"id":"B26123524","s":"3524","n":"纪晓冉","c":"审计专升本B261235","cn":"35"},{"id":"B26123525","s":"3525","n":"张丽娜","c":"审计专升本B261235","cn":"35"},{"id":"B26123526","s":"3526","n":"周天颖","c":"审计专升本B261235","cn":"35"},{"id":"B26123527","s":"3527","n":"黄雨润","c":"审计专升本B261235","cn":"35"},{"id":"B26123528","s":"3528","n":"李俊燕","c":"审计专升本B261235","cn":"35"},{"id":"B26123529","s":"3529","n":"白梦微","c":"审计专升本B261235","cn":"35"},{"id":"B26123530","s":"3530","n":"郭俊孜","c":"审计专升本B261235","cn":"35"},{"id":"B26123531","s":"3531","n":"焦若晗","c":"审计专升本B261235","cn":"35"},{"id":"B26123532","s":"3532","n":"刘思雨","c":"审计专升本B261235","cn":"35"},{"id":"B26123533","s":"3533","n":"贾庆豪","c":"审计专升本B261235","cn":"35"},{"id":"B26123534","s":"3534","n":"梁一凡","c":"审计专升本B261235","cn":"35"},{"id":"B26123535","s":"3535","n":"郝浩楠","c":"审计专升本B261235","cn":"35"},{"id":"B26123536","s":"3536","n":"桂广浩","c":"审计专升本B261235","cn":"35"},{"id":"B26123601","s":"3601","n":"王明慧","c":"审计专升本B261236","cn":"36"},{"id":"B26123602","s":"3602","n":"李康","c":"审计专升本B261236","cn":"36"},{"id":"B26123603","s":"3603","n":"闫依婷","c":"审计专升本B261236","cn":"36"},{"id":"B26123604","s":"3604","n":"丁鹏鹤","c":"审计专升本B261236","cn":"36"},{"id":"B26123605","s":"3605","n":"王可心","c":"审计专升本B261236","cn":"36"},{"id":"B26123606","s":"3606","n":"章柳柳","c":"审计专升本B261236","cn":"36"},{"id":"B26123607","s":"3607","n":"赵艺晶","c":"审计专升本B261236","cn":"36"},{"id":"B26123608","s":"3608","n":"杨瑞利","c":"审计专升本B261236","cn":"36"},{"id":"B26123609","s":"3609","n":"杨尧","c":"审计专升本B261236","cn":"36"},{"id":"B26123610","s":"3610","n":"樊雨萱","c":"审计专升本B261236","cn":"36"},{"id":"B26123611","s":"3611","n":"聂宇婷","c":"审计专升本B261236","cn":"36"},{"id":"B26123612","s":"3612","n":"蒋婷","c":"审计专升本B261236","cn":"36"},{"id":"B26123613","s":"3613","n":"魏宇婷","c":"审计专升本B261236","cn":"36"},{"id":"B26123614","s":"3614","n":"孙晓丽","c":"审计专升本B261236","cn":"36"},{"id":"B26123615","s":"3615","n":"付甜","c":"审计专升本B261236","cn":"36"},{"id":"B26123616","s":"3616","n":"王阿茹","c":"审计专升本B261236","cn":"36"},{"id":"B26123617","s":"3617","n":"吴瑞霜","c":"审计专升本B261236","cn":"36"},{"id":"B26123618","s":"3618","n":"李书莹","c":"审计专升本B261236","cn":"36"},{"id":"B26123619","s":"3619","n":"王静茹","c":"审计专升本B261236","cn":"36"},{"id":"B26123620","s":"3620","n":"胡潇芳","c":"审计专升本B261236","cn":"36"},{"id":"B26123621","s":"3621","n":"孟梓涵","c":"审计专升本B261236","cn":"36"},{"id":"B26123622","s":"3622","n":"陈跃宣","c":"审计专升本B261236","cn":"36"},{"id":"B26123623","s":"3623","n":"贡欣然","c":"审计专升本B261236","cn":"36"},{"id":"B26123624","s":"3624","n":"刘晓璐","c":"审计专升本B261236","cn":"36"},{"id":"B26123625","s":"3625","n":"毛一安","c":"审计专升本B261236","cn":"36"},{"id":"B26123626","s":"3626","n":"王茜茜","c":"审计专升本B261236","cn":"36"},{"id":"B26123627","s":"3627","n":"赵文靖","c":"审计专升本B261236","cn":"36"},{"id":"B26123628","s":"3628","n":"朱飞翔","c":"审计专升本B261236","cn":"36"},{"id":"B26123629","s":"3629","n":"原超莹","c":"审计专升本B261236","cn":"36"},{"id":"B26123630","s":"3630","n":"刘长岩","c":"审计专升本B261236","cn":"36"},{"id":"B26123631","s":"3631","n":"鲁豫","c":"审计专升本B261236","cn":"36"},{"id":"B26123632","s":"3632","n":"尹雅婷","c":"审计专升本B261236","cn":"36"},{"id":"B26123633","s":"3633","n":"王荟轩","c":"审计专升本B261236","cn":"36"},{"id":"B26123634","s":"3634","n":"陈衍武","c":"审计专升本B261236","cn":"36"},{"id":"B26123635","s":"3635","n":"常永杰","c":"审计专升本B261236","cn":"36"},{"id":"B26123636","s":"3636","n":"卢家璇","c":"审计专升本B261236","cn":"36"},{"id":"B26123301","s":"3301","n":"赵佳欣","c":"会计专升本B261233","cn":"33"},{"id":"B26123302","s":"3302","n":"孙慧佳","c":"会计专升本B261233","cn":"33"},{"id":"B26123303","s":"3303","n":"陈子云","c":"会计专升本B261233","cn":"33"},{"id":"B26123304","s":"3304","n":"李霁杭","c":"会计专升本B261233","cn":"33"},{"id":"B26123305","s":"3305","n":"徐靖怡","c":"会计专升本B261233","cn":"33"},{"id":"B26123306","s":"3306","n":"程思瑜","c":"会计专升本B261233","cn":"33"},{"id":"B26123307","s":"3307","n":"许琳琳","c":"会计专升本B261233","cn":"33"},{"id":"B26123308","s":"3308","n":"王永","c":"会计专升本B261233","cn":"33"},{"id":"B26123309","s":"3309","n":"刘文静","c":"会计专升本B261233","cn":"33"},{"id":"B26123310","s":"3310","n":"张京红","c":"会计专升本B261233","cn":"33"},{"id":"B26123311","s":"3311","n":"张喜云","c":"会计专升本B261233","cn":"33"},{"id":"B26123312","s":"3312","n":"冯俊金","c":"会计专升本B261233","cn":"33"},{"id":"B26123313","s":"3313","n":"张方圆","c":"会计专升本B261233","cn":"33"},{"id":"B26123314","s":"3314","n":"蒋雅雯","c":"会计专升本B261233","cn":"33"},{"id":"B26123315","s":"3315","n":"牛雯君","c":"会计专升本B261233","cn":"33"},{"id":"B26123316","s":"3316","n":"李乐昕","c":"会计专升本B261233","cn":"33"},{"id":"B26123317","s":"3317","n":"郭婉淇","c":"会计专升本B261233","cn":"33"},{"id":"B26123318","s":"3318","n":"毛文彤","c":"会计专升本B261233","cn":"33"},{"id":"B26123319","s":"3319","n":"刘静怡","c":"会计专升本B261233","cn":"33"},{"id":"B26123320","s":"3320","n":"樊萧萧","c":"会计专升本B261233","cn":"33"},{"id":"B26123321","s":"3321","n":"徐晴晴","c":"会计专升本B261233","cn":"33"},{"id":"B26123322","s":"3322","n":"张小涵","c":"会计专升本B261233","cn":"33"},{"id":"B26123323","s":"3323","n":"贺若楠","c":"会计专升本B261233","cn":"33"},{"id":"B26123324","s":"3324","n":"蔡卓辰","c":"会计专升本B261233","cn":"33"},{"id":"B26123325","s":"3325","n":"张文娟","c":"会计专升本B261233","cn":"33"},{"id":"B26123326","s":"3326","n":"王晓露","c":"会计专升本B261233","cn":"33"},{"id":"B26123327","s":"3327","n":"杜冉","c":"会计专升本B261233","cn":"33"},{"id":"B26123328","s":"3328","n":"侯云风","c":"会计专升本B261233","cn":"33"},{"id":"B26123329","s":"3329","n":"温嘉鑫","c":"会计专升本B261233","cn":"33"},{"id":"B26123330","s":"3330","n":"王梦馨","c":"会计专升本B261233","cn":"33"},{"id":"B26123331","s":"3331","n":"杨梦","c":"会计专升本B261233","cn":"33"},{"id":"B26123332","s":"3332","n":"李文娟","c":"会计专升本B261233","cn":"33"},{"id":"B26123333","s":"3333","n":"王亚茹","c":"会计专升本B261233","cn":"33"},{"id":"B26123334","s":"3334","n":"刘昱含","c":"会计专升本B261233","cn":"33"},{"id":"B26123335","s":"3335","n":"史雨露","c":"会计专升本B261233","cn":"33"},{"id":"B26123336","s":"3336","n":"李欣怡","c":"会计专升本B261233","cn":"33"},{"id":"B26123337","s":"3337","n":"刘童心","c":"会计专升本B261233","cn":"33"},{"id":"B26123338","s":"3338","n":"张甬寒","c":"会计专升本B261233","cn":"33"},{"id":"B26123339","s":"3339","n":"毋雯慧","c":"会计专升本B261233","cn":"33"},{"id":"B26123340","s":"3340","n":"赵莹莹","c":"会计专升本B261233","cn":"33"},{"id":"B26123341","s":"3341","n":"王梦","c":"会计专升本B261233","cn":"33"},{"id":"B26123342","s":"3342","n":"采梦圆","c":"会计专升本B261233","cn":"33"},{"id":"B26123343","s":"3343","n":"宋嘉乐","c":"会计专升本B261233","cn":"33"},{"id":"B26123344","s":"3344","n":"齐小静","c":"会计专升本B261233","cn":"33"},{"id":"B26123345","s":"3345","n":"徐瑞云","c":"会计专升本B261233","cn":"33"},{"id":"B26123346","s":"3346","n":"张敬宇","c":"会计专升本B261233","cn":"33"},{"id":"B26123347","s":"3347","n":"韩岳卓","c":"会计专升本B261233","cn":"33"},{"id":"B26123348","s":"3348","n":"杨永春","c":"会计专升本B261233","cn":"33"},{"id":"B26123401","s":"3401","n":"于嫚嫚","c":"会计专升本B261234","cn":"34"},{"id":"B26123402","s":"3402","n":"王雯雨","c":"会计专升本B261234","cn":"34"},{"id":"B26123403","s":"3403","n":"朱俊一","c":"会计专升本B261234","cn":"34"},{"id":"B26123404","s":"3404","n":"王艺芳","c":"会计专升本B261234","cn":"34"},{"id":"B26123405","s":"3405","n":"王文佳","c":"会计专升本B261234","cn":"34"},{"id":"B26123406","s":"3406","n":"张君茹","c":"会计专升本B261234","cn":"34"},{"id":"B26123407","s":"3407","n":"李瑞迪","c":"会计专升本B261234","cn":"34"},{"id":"B26123408","s":"3408","n":"陈思","c":"会计专升本B261234","cn":"34"},{"id":"B26123409","s":"3409","n":"高国雨","c":"会计专升本B261234","cn":"34"},{"id":"B26123410","s":"3410","n":"吕思影","c":"会计专升本B261234","cn":"34"},{"id":"B26123411","s":"3411","n":"李晓楠","c":"会计专升本B261234","cn":"34"},{"id":"B26123412","s":"3412","n":"鲍珺敏","c":"会计专升本B261234","cn":"34"},{"id":"B26123413","s":"3413","n":"樊佳妍","c":"会计专升本B261234","cn":"34"},{"id":"B26123414","s":"3414","n":"周延旭","c":"会计专升本B261234","cn":"34"},{"id":"B26123415","s":"3415","n":"曹行情","c":"会计专升本B261234","cn":"34"},{"id":"B26123416","s":"3416","n":"王羽展","c":"会计专升本B261234","cn":"34"},{"id":"B26123417","s":"3417","n":"吉星雨","c":"会计专升本B261234","cn":"34"},{"id":"B26123418","s":"3418","n":"王凤阳","c":"会计专升本B261234","cn":"34"},{"id":"B26123419","s":"3419","n":"王静","c":"会计专升本B261234","cn":"34"},{"id":"B26123420","s":"3420","n":"张文悦","c":"会计专升本B261234","cn":"34"},{"id":"B26123421","s":"3421","n":"侯舒晴","c":"会计专升本B261234","cn":"34"},{"id":"B26123422","s":"3422","n":"代俐沙","c":"会计专升本B261234","cn":"34"},{"id":"B26123423","s":"3423","n":"刘峙娴","c":"会计专升本B261234","cn":"34"},{"id":"B26123424","s":"3424","n":"梅诗宜","c":"会计专升本B261234","cn":"34"},{"id":"B26123425","s":"3425","n":"祁堃堉","c":"会计专升本B261234","cn":"34"},{"id":"B26123426","s":"3426","n":"张安琪","c":"会计专升本B261234","cn":"34"},{"id":"B26123427","s":"3427","n":"蒋朋廷","c":"会计专升本B261234","cn":"34"},{"id":"B26123428","s":"3428","n":"赵晓琪","c":"会计专升本B261234","cn":"34"},{"id":"B26123429","s":"3429","n":"邵梦瑶","c":"会计专升本B261234","cn":"34"},{"id":"B26123430","s":"3430","n":"陈言莉","c":"会计专升本B261234","cn":"34"},{"id":"B26123431","s":"3431","n":"袁玉彤","c":"会计专升本B261234","cn":"34"},{"id":"B26123432","s":"3432","n":"徐佳艺","c":"会计专升本B261234","cn":"34"},{"id":"B26123433","s":"3433","n":"杨宏美","c":"会计专升本B261234","cn":"34"},{"id":"B26123434","s":"3434","n":"王恩慧","c":"会计专升本B261234","cn":"34"},{"id":"B26123435","s":"3435","n":"乔嘉琪","c":"会计专升本B261234","cn":"34"},{"id":"B26123436","s":"3436","n":"李娜","c":"会计专升本B261234","cn":"34"},{"id":"B26123437","s":"3437","n":"齐悦彤","c":"会计专升本B261234","cn":"34"},{"id":"B26123438","s":"3438","n":"刘梦晨","c":"会计专升本B261234","cn":"34"},{"id":"B26123439","s":"3439","n":"詹梦媛","c":"会计专升本B261234","cn":"34"},{"id":"B26123440","s":"3440","n":"赵旭佳","c":"会计专升本B261234","cn":"34"},{"id":"B26123441","s":"3441","n":"付伊娜","c":"会计专升本B261234","cn":"34"},{"id":"B26123442","s":"3442","n":"张安琪","c":"会计专升本B261234","cn":"34"},{"id":"B26123443","s":"3443","n":"师嘉赫","c":"会计专升本B261234","cn":"34"},{"id":"B26123444","s":"3444","n":"耿鹏丽","c":"会计专升本B261234","cn":"34"},{"id":"B26123445","s":"3445","n":"秦路阳","c":"会计专升本B261234","cn":"34"},{"id":"B26123446","s":"3446","n":"刘帅良","c":"会计专升本B261234","cn":"34"},{"id":"B26123447","s":"3447","n":"郭凯晨","c":"会计专升本B261234","cn":"34"},{"id":"B26123448","s":"3448","n":"黄靖超","c":"会计专升本B261234","cn":"34"}];
+
+const CLASS_NAMES={"31":"财管专升本B261231","32":"会计专升本B261232","33":"会计专升本B261233","34":"会计专升本B261234","35":"审计专升本B261235","36":"审计专升本B261236"};
+const STORAGE_KEY="classroom_scores_v1";
+let currentStudent=null;
+let currentFilter="all";
+
+function loadData(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY))||{}}catch(e){return{}}}
+function saveData(d){localStorage.setItem(STORAGE_KEY,JSON.stringify(d))}
+
+function handleSearch(){
+const input=document.getElementById("searchInput").value.trim();
+const result=document.getElementById("searchResult");
+const action=document.getElementById("scoreAction");
+if(!input){result.innerHTML='<div class="hint-text">请输入学号后四位快速定位学生</div>';action.style.display="none";currentStudent=null;return}
+const matches=STUDENTS.filter(s=>s.s.startsWith(input)||s.id.endsWith(input));
+if(matches.length===0){result.innerHTML='<div class="no-match">未找到该学生</div>';action.style.display="none";currentStudent=null;return}
+if(matches.length===1){selectStudent(matches[0]);return}
+let html='';
+matches.forEach(s=>{
+const data=loadData();const key=s.id;
+const total=(data[key]||[]).reduce((a,b)=>a+b.d,0);
+html+='<div class="student-card" onclick="selectStudent(STUDENTS.find(x=>x.id===\''+s.id+'\'))" style="margin-bottom:10px;cursor:pointer">';
+html+='<div class="name">'+s.n+'</div>';
+html+='<div class="meta">'+s.id+' · '+s.c+'</div>';
+if(total>0)html+='<div class="score-display">当前积分：'+total+'</div>';
+html+='</div>';});
+result.innerHTML=html;action.style.display="none";currentStudent=null}
+
+function selectStudent(s){
+currentStudent=s;
+const data=loadData();const records=data[s.id]||[];
+const total=records.reduce((a,b)=>a+b.d,0);
+const result=document.getElementById("searchResult");
+result.innerHTML='<div class="student-card selected">'
++'<div class="name">'+s.n+'</div>'
++'<div class="meta">'+s.id+' · '+s.c+'</div>'
++'<div class="score-display">当前积分：'+total+'</div>'
++(records.length?'<div class="meta" style="margin-top:6px">共'+records.length+'次操作</div>':'')
++'</div>';
+document.getElementById("scoreAction").style.display="block";
+document.getElementById("searchInput").value=s.s}
+
+function addScore(delta){
+if(!currentStudent)return;
+const data=loadData();
+if(!data[currentStudent.id])data[currentStudent.id]=[];
+data[currentStudent.id].push({d:delta,t:Date.now()});
+saveData(data);
+selectStudent(currentStudent);
+updateBadge()}
+
+function resetStudent(){
+if(!currentStudent)return;
+if(!confirm("确定清零 "+currentStudent.n+" 的分数吗？"))return;
+const data=loadData();delete data[currentStudent.id];saveData(data);
+selectStudent(currentStudent);updateBadge()}
+
+function showTab(tab){
+document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+document.querySelectorAll(".tab")[tab==="scoring"?0:1].classList.add("active");
+document.getElementById("scoringPanel").style.display=tab==="scoring"?"block":"none";
+document.getElementById("recordsPanel").style.display=tab==="records"?"block":"none";
+if(tab==="records")showRecords()}
+
+function showRecords(){
+const data=loadData();
+const filterBar=document.getElementById("filterBar");
+let fhtml='<div class="filter-btn'+(currentFilter==="all"?" active":"")+'" onclick="setFilter(\'all\')">全部</div>';
+Object.keys(CLASS_NAMES).forEach(cn=>{
+fhtml+='<div class="filter-btn'+(currentFilter===cn?" active":"")+'" onclick="setFilter(\''+cn+'\')">'+CLASS_NAMES[cn].replace(/B2612(\d{3})/,'$1')+'</div>';});
+filterBar.innerHTML=fhtml;
+const list=document.getElementById("recordsList");
+let items=[];
+Object.keys(data).forEach(sid=>{
+const records=data[sid];if(!records||!records.length)return;
+const student=STUDENTS.find(s=>s.id===sid);if(!student)return;
+if(currentFilter!=="all"&&student.cn!==currentFilter)return;
+const total=records.reduce((a,b)=>a+b.d,0);
+items.push({student,total,records})});
+items.sort((a,b)=>b.total-a.total);
+if(!items.length){list.innerHTML='<div class="empty-records"><div class="icon">📝</div><div>暂无加分记录</div></div>';return}
+let html='';
+items.forEach((item,idx)=>{
+const s=item.student;
+html+='<div class="record-item"><div class="top"><div class="student-info">'
++'<div class="rname">'+s.n+'</div>'
++'<div class="rmeta">'+s.s+' · '+s.c+'</div></div>'
++'<div class="total-score">'+item.total+'</div></div>'
++'<div class="toggle-details" onclick="toggleDetail('+idx+')">展开详情 ('+item.records.length+'次)</div>'
++'<div class="details" id="detail_'+idx+'" style="display:none">';
+item.records.slice().reverse().forEach(r=>{
+const dt=new Date(r.t);const ts=dt.getMonth()+1+'/'+dt.getDate()+' '+dt.getHours()+':'+String(dt.getMinutes()).padStart(2,'0');
+const cls=r.d>0?'positive':'negative';
+html+='<div class="detail-row"><span>'+ts+'</span><span class="delta '+cls+'">'+(r.d>0?'+':'')+r.d+'</span></div>';});
+html+='</div></div>';});
+list.innerHTML=html}
+
+function toggleDetail(idx){
+const el=document.getElementById("detail_"+idx);
+el.style.display=el.style.display==="none"?"block":"none"}
+
+function setFilter(f){currentFilter=f;showRecords()}
+
+function exportSummary(){
+const data=loadData();
+let csv='\uFEFF学号,姓名,班级,总分,加分次数\n';
+let count=0;
+STUDENTS.forEach(s=>{
+const records=data[s.id];
+if(!records||!records.length)return;
+const total=records.reduce((a,b)=>a+b.d,0);
+csv+=s.id+','+s.n+','+s.c+','+total+','+records.length+'\n';count++});
+if(!count){alert("暂无记录可导出");return}
+downloadCSV(csv,'课堂互动加分汇总.csv')}
+
+function exportDetail(){
+const data=loadData();
+let csv='\uFEFF学号,姓名,班级,时间,变动分数\n';
+let count=0;
+STUDENTS.forEach(s=>{
+const records=data[s.id];if(!records)return;
+records.forEach(r=>{
+const dt=new Date(r.t);
+const ts=dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0')+' '+String(dt.getHours()).padStart(2,'0')+':'+String(dt.getMinutes()).padStart(2,'0')+':'+String(dt.getSeconds()).padStart(2,'0');
+csv+=s.id+','+s.n+','+s.c+','+ts+','+(r.d>0?'+':'')+r.d+'\n';count++})});
+if(!count){alert("暂无记录可导出");return}
+downloadCSV(csv,'课堂互动加分明细.csv')}
+
+function downloadCSV(content,filename){
+const blob=new Blob([content],{type:'text/csv;charset=utf-8'});
+const url=URL.createObjectURL(blob);
+const a=document.createElement('a');a.href=url;a.download=filename;
+document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url)}
+
+function clearAll(){
+document.getElementById("confirmText").textContent="确定要清空所有加分记录吗？此操作不可恢复！";
+document.getElementById("confirmBtn").onclick=function(){
+localStorage.removeItem(STORAGE_KEY);hideConfirm();
+document.getElementById("searchResult").innerHTML='<div class="hint-text">请输入学号后四位快速定位学生</div>';
+document.getElementById("scoreAction").style.display="none";currentStudent=null;
+if(document.getElementById("recordsPanel").style.display!=="none")showRecords();
+updateBadge()};
+document.getElementById("confirmOverlay").style.display="flex"}
+
+function hideConfirm(){document.getElementById("confirmOverlay").style.display="none"}
+
+function updateBadge(){
+const data=loadData();
+const count=Object.keys(data).filter(k=>data[k]&&data[k].length>0).length;
+const badge=document.getElementById("recordBadge");
+if(count>0){badge.style.display="inline-block";badge.textContent=count}
+else{badge.style.display="none"}}
+
+document.addEventListener("DOMContentLoaded",function(){updateBadge()});
+
+function showImportDialog(){
+document.getElementById("importOverlay").style.display="flex";
+document.getElementById("importTextarea").value="";
+document.getElementById("importPreview").innerHTML="";
+document.getElementById("doImportBtn").disabled=true;
+setTimeout(()=>document.getElementById("importTextarea").focus(),100)}
+
+function hideImportDialog(){document.getElementById("importOverlay").style.display="none"}
+
+function parseImportNumbers(text){
+const tokens=text.split(/[\s,，;；\n\r\t]+/).filter(t=>t.length>0);
+const result=[];
+tokens.forEach(t=>{const m=t.match(/\d{4}$/);if(m)result.push(m[0])});
+return result}
+
+function previewImport(){
+const text=document.getElementById("importTextarea").value;
+const numbers=parseImportNumbers(text);
+const preview=document.getElementById("importPreview");
+if(numbers.length===0){preview.innerHTML="";document.getElementById("doImportBtn").disabled=true;return}
+const matched=[];const unmatched=[];
+const nameMap={};
+numbers.forEach(num=>{
+const student=STUDENTS.find(s=>s.s===num);
+if(student){matched.push({num,name:student.n,cls:student.c});if(!nameMap[num])nameMap[num]={name:student.n,count:0};nameMap[num].count++}
+else{if(!unmatched.includes(num))unmatched.push(num)}});
+let html='<div>共解析 <b>'+numbers.length+'</b> 个号码</div>';
+if(matched.length>0){
+html+='<div class="matched">✓ 匹配成功 '+matched.length+' 个（'+Object.keys(nameMap).length+' 人）</div>';
+html+='<div style="margin-top:6px;font-size:12px">';
+Object.keys(nameMap).sort().forEach(num=>{html+='<span style="margin-right:10px">'+nameMap[num].name+'('+num+') ×'+nameMap[num].count+'</span>'});
+html+='</div>'}
+if(unmatched.length>0){html+='<div class="unmatched">✗ 未匹配 '+unmatched.length+' 个：'+unmatched.join(', ')+'</div>'}
+preview.innerHTML=html;
+document.getElementById("doImportBtn").disabled=matched.length===0}
+
+function doImport(){
+const text=document.getElementById("importTextarea").value;
+const numbers=parseImportNumbers(text);
+const data=loadData();
+let importCount=0;
+const now=Date.now();
+numbers.forEach((num,idx)=>{
+const student=STUDENTS.find(s=>s.s===num);
+if(student){
+if(!data[student.id])data[student.id]=[];
+data[student.id].push({d:1,t:now+idx});
+importCount++}});
+saveData(data);
+hideImportDialog();
+alert('导入完成！共导入 '+importCount+' 条加分记录。');
+updateBadge();
+if(document.getElementById("recordsPanel").style.display!=="none")showRecords()}
+</script>
+</body>
+</html>
